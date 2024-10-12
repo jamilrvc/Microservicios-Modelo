@@ -1,0 +1,6 @@
+FROM python:3.12
+WORKDIR /usr/src/app
+COPY .  ./
+RUN pip3 install -r ./dependencies.txt
+
+CMD ["gunicorn","--config", "gunicorn.conf.py", "app:app"]
