@@ -1,5 +1,5 @@
 from flask import Flask,jsonify, render_template, request, send_from_directory, abort
-import requests
+import requests, pika
 from random import sample
 from pymongo import MongoClient
 import os
@@ -9,9 +9,6 @@ PORT = int(os.environ.get("PORT"))
 DBHOST = os.environ.get("DBHOST")
 DBNAME = os.environ.get("DBNAME")
 
-# Inicializar la aplicación Flask
-app = Flask(__name__)
-
 # Conectar con el servidor de la base de datos
 client = MongoClient(DBHOST)
 
@@ -20,21 +17,43 @@ db = client[DBNAME]
 
 # Obtener la colección de historial
 historyCollection = db['history']
+# Inicializar la aplicación Flask
+app = Flask(__name__)
 
-# Ruta POST para manejar el mensaje "viewed"
-@app.route("/viewed", methods=['POST'])
-def viewed():
-    data = request.get_json()
-    video_path = data.get("videoPath")
 
-    if not video_path:
-        return jsonify({"error": "videoPath is required"}), 400
+# Conexión a RabbitMQ y configuración del canal
+def connect_rabbitmq():
+    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBIT))
+    channel = connection.channel()
 
-    # Insertar el registro en la colección "history"
-    historyCollection.insert_one({"videoPath": video_path})
-    print(f"Added video {video_path} to history.")
+    # Asegurar que la cola "viewed" exista
+    channel.queue_declare(queue='viewed')
+    return channel
 
-    return '', 200  # Enviar una respuesta HTTP 200 OK
+message_channel = connect_rabbitmq()
+
+# Función para manejar los mensajes de RabbitMQ
+def process_rabbitmq_messages():
+    def callback(ch, method, properties, body):
+        print("Received a 'viewed' message")
+        parsed_msg = json.loads(body.decode())
+        
+        # Insertar en MongoDB el videoPath
+        historyCollection.insert_one({'videoPath': parsed_msg['videoPath']})
+        print(f"Added video {parsed_msg['videoPath']} to history.")
+        
+        # Acknowledge que el mensaje fue manejado
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    message_channel.basic_consume(queue='viewed', on_message_callback=callback)
+    print("Waiting for messages. To exit press CTRL+C")
+    message_channel.start_consuming()
+
+# Iniciar consumo de mensajes de RabbitMQ en un hilo separado
+import threading
+rabbitmq_thread = threading.Thread(target=process_rabbitmq_messages)
+rabbitmq_thread.daemon = True
+rabbitmq_thread.start()
 
 # Ruta GET para recuperar el historial de videos vistos
 @app.route("/history", methods=['GET'])
