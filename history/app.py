@@ -5,7 +5,7 @@ from pymongo import MongoClient
 import os
 
 # Variables de entorno
-PORT = int(os.environ.get("PORT"))
+
 DBHOST = os.environ.get("DBHOST")
 DBNAME = os.environ.get("DBNAME")
 RABBIT = os.environ.get("RABBIT")

@@ -29,7 +29,8 @@ services:
       - GUNICORN_BIND=0.0.0.0:80
       - RABBIT=amqp://guest:guest@rabbit:5672
     restart: "no"
-
+    depends_on:
+      - rabbit
   history:
     image: history
     build: 
