@@ -16,7 +16,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     restart: always
-    
+
   video-streaming:
     image: video-streaming
     build: 
@@ -27,6 +27,7 @@ services:
       - "4001:80"
     environment:
       - GUNICORN_BIND=0.0.0.0:80
+      - RABBIT=amqp://guest:guest@rabbit:5672
     restart: "no"
 
   history:

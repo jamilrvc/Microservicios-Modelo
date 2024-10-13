@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_from_directory, abort
-import requests
+import requests,pika
 import json, logging
 from random import sample
 from pymongo import MongoClient
@@ -9,6 +9,7 @@ import os
 app = Flask(__name__)
 
 os.environ.get('GUNICORN_BIND')
+RABBIT = os.environ.get("RABBIT")
 
 #Funciones
 

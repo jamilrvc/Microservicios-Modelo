@@ -8,7 +8,7 @@ import os
 PORT = int(os.environ.get("PORT"))
 DBHOST = os.environ.get("DBHOST")
 DBNAME = os.environ.get("DBNAME")
-
+RABBIT = os.environ.get("RABBIT")
 # Conectar con el servidor de la base de datos
 client = MongoClient(DBHOST)
 
