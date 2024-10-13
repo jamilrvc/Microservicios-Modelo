@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, send_from_directory, abort
 import requests
-import json
+import json, logging
 from random import sample
 from pymongo import MongoClient
 import os
@@ -17,24 +17,24 @@ def get_database(dbhost,dbname):
    return client.get_database(dbname)
 
 
-# Función para enviar el mensaje de "viewed" al microservicio de historial
-def send_viewed_message_to_history(video_path):
-    url = "http://history/viewed"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    request_body = {
-        "videoPath": video_path
-    }
 
-    try:
-        # Enviar solicitud POST al microservicio
-        response = requests.post(url, headers=headers, data=json.dumps(request_body))
-        response.raise_for_status()
-        print(f"Sent 'viewed' message for {video_path}")
-    except requests.exceptions.RequestException as err:
-        print(f"Failed to send 'viewed' message for {video_path}")
-        print(err)
+# Configuración del canal de RabbitMQ
+def connect_to_rabbitmq():
+    logging.info(f"Connecting to RabbitMQ server at {RABBIT}.")
+    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBIT))
+    channel = connection.channel()
+    logging.info("Connected to RabbitMQ.")
+    return channel
+
+message_channel = connect_to_rabbitmq()
+
+# Función para enviar mensaje a RabbitMQ
+def send_viewed_message(message_channel, video_path):
+    logging.info("Publishing message on 'viewed' queue.")
+    msg = {"videoPath": video_path}
+    json_msg = json.dumps(msg)
+    message_channel.basic_publish(exchange='', routing_key='viewed', body=json_msg)
+    logging.info(f"Message published: {json_msg}")
 
 
 
@@ -49,7 +49,7 @@ def video_stream(path):
     if request.method == 'GET':
         try:
             video_response =  send_from_directory('static',  path)
-            send_viewed_message_to_history(path)
+            send_viewed_message(message_channel,path)
             return video_response
         except FileNotFoundError:
             abort(404)
