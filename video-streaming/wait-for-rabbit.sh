@@ -1,13 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
-# Esperar hasta que RabbitMQ esté listo
-until nc -z rabbit 5672; do
-  echo "Esperando a que RabbitMQ esté disponible..."
-  sleep 2
+set -e
+
+HOST="$1"
+shift
+CMD="$@"
+
+until nc -z "$HOST" 5672; do
+  >&2 echo "RabbitMQ is unavailable - sleeping"
+  sleep 1
 done
 
-echo "RabbitMQ está disponible, iniciando la aplicación..."
+>&2 echo "RabbitMQ is up - executing command"
+exec $CMD
 
-# Iniciar la aplicación (puedes ajustar el comando según tu configuración)
-exec gunicorn -b 0.0.0.0:80 app:app
 

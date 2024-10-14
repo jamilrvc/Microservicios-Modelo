@@ -27,7 +27,7 @@ services:
       - "4001:80"
     environment:
       - GUNICORN_BIND=0.0.0.0:80
-      - RABBIT=amqp://guest:guest@rabbit:5672
+      - RABBIT=rabbit
     restart: "no"
     depends_on:
       - rabbit
@@ -41,7 +41,7 @@ services:
       - "4002:80"
     environment:
       - GUNICORN_BIND=0.0.0.0:80
-      - RABBIT=amqp://guest:guest@rabbit:5672
+      - RABBIT=rabbit
       - DBHOST=mongodb://db:27017
       - DBNAME=history
       - NODE_ENV=development

@@ -1,6 +1,6 @@
 FROM python:3.12
-WORKDIR /usr/src/app
+RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*WORKDIR /usr/src/app
 COPY .  ./
 RUN pip3 install -r ./dependencies.txt
 
-CMD ["./wait-for-rabbit.sh", "rabbit:5672", "--","gunicorn","--config", "gunicorn.conf.py", "app:app"]
+CMD ["./wait-for-rabbit.sh", "rabbit", "gunicorn --config gunicorn.conf.py app:app"]

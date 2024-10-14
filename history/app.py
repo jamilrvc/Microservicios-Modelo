@@ -1,5 +1,5 @@
 from flask import Flask,jsonify, render_template, request, send_from_directory, abort
-import requests, pika
+import requests, pika, json
 from random import sample
 from pymongo import MongoClient
 import os
@@ -23,7 +23,7 @@ app = Flask(__name__)
 
 # Conexión a RabbitMQ y configuración del canal
 def connect_rabbitmq():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBIT))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest')))
     channel = connection.channel()
 
     # Asegurar que la cola "viewed" exista

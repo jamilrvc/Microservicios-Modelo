@@ -22,7 +22,7 @@ def get_database(dbhost,dbname):
 # Configuración del canal de RabbitMQ
 def connect_to_rabbitmq():
     logging.info(f"Connecting to RabbitMQ server at {RABBIT}.")
-    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBIT))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest')))
     channel = connection.channel()
     logging.info("Connected to RabbitMQ.")
     return channel
