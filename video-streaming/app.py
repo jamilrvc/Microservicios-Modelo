@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_from_directory, abort
-import requests,pika
+import requests,pika, time
 import json, logging
 from random import sample
 from pymongo import MongoClient
@@ -21,13 +21,25 @@ def get_database(dbhost,dbname):
 
 # Configuración del canal de RabbitMQ
 def connect_to_rabbitmq():
-    logging.info(f"Connecting to RabbitMQ server at {RABBIT}.")
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest')))
-    channel = connection.channel()
-    logging.info("Connected to RabbitMQ.")
-    return channel
-
-message_channel = connect_to_rabbitmq()
+    while True:
+        try:
+            logging.info(f"Connecting to RabbitMQ server at {RABBIT}.")
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=RABBIT,
+                    port=5672,
+                    credentials=pika.PlainCredentials('guest', 'guest'),
+                    heartbeat=60  # 10 minutos de heartbeat
+                )
+            )
+            channel = connection.channel()
+            logging.info("Connected to RabbitMQ.")
+            return connection, channel
+        except pika.exceptions.AMQPConnectionError as e:
+            logging.error(f"Failed to connect to RabbitMQ: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
+# Mantener la conexión a RabbitMQ
+connection, message_channel = connect_to_rabbitmq()
 
 # Función para enviar mensaje a RabbitMQ
 def send_viewed_message(message_channel, video_path):

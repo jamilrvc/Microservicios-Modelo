@@ -23,7 +23,7 @@ app = Flask(__name__)
 
 # Conexión a RabbitMQ y configuración del canal
 def connect_rabbitmq():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest')))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest'), heartbeat= 600))
     channel = connection.channel()
 
     # Asegurar que la cola "viewed" exista
