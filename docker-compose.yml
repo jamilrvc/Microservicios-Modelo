@@ -44,7 +44,25 @@ services:
       - RABBIT=rabbit
       - DBHOST=mongodb://db:27017
       - DBNAME=history
-      - NODE_ENV=development
+
+    depends_on:
+      - db
+      - rabbit
+    restart: "no"
+
+  metrics:
+    image: metrics
+    build: 
+      context: ./metrics
+      dockerfile: Dockerfile
+    container_name: metrics
+    ports:
+      - "4002:80"
+    environment:
+      - GUNICORN_BIND=0.0.0.0:80
+      - RABBIT=rabbit
+      - DBHOST=mongodb://db:27017
+      - DBNAME=metrics
     depends_on:
       - db
       - rabbit
