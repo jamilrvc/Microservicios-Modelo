@@ -26,14 +26,20 @@ def connect_rabbitmq():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT, port=5672,credentials=pika.PlainCredentials('guest', 'guest'), heartbeat= 600))
     channel = connection.channel()
 
-    # Asegurar que la cola "viewed" exista
-    channel.queue_declare(queue='viewed')
+    # Asegurar que el exchange "viewed" exista y si no lo crea
+    channel.exchange_declare(exchange='viewed', exchange_type='fanout')
     return channel
 
 message_channel = connect_rabbitmq()
 
 # Función para manejar los mensajes de RabbitMQ
 def process_rabbitmq_messages():
+
+    queue_result = message_channel.queue_declare(queue='', exclusive=True)
+    queue_name = queue_result.method.queue
+
+    message_channel.queue_bind(exchange='viewed', queue=queue_name)
+
     def callback(ch, method, properties, body):
         print("Received a 'viewed' message")
         parsed_msg = json.loads(body.decode())
@@ -44,7 +50,7 @@ def process_rabbitmq_messages():
         
         # Acknowledge que el mensaje fue manejado
         ch.basic_ack(delivery_tag=method.delivery_tag)
-
+    message_channel.basic_con
     message_channel.basic_consume(queue='viewed', on_message_callback=callback)
     print("Waiting for messages. To exit press CTRL+C")
     message_channel.start_consuming()
