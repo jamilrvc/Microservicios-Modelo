@@ -57,7 +57,7 @@ services:
       dockerfile: Dockerfile
     container_name: metrics
     ports:
-      - "4002:80"
+      - "4003:80"
     environment:
       - GUNICORN_BIND=0.0.0.0:80
       - RABBIT=rabbit
