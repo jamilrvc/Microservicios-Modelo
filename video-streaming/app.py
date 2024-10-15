@@ -41,13 +41,23 @@ def connect_to_rabbitmq():
 # Mantener la conexión a RabbitMQ
 connection, message_channel = connect_to_rabbitmq()
 
-# Función para enviar mensaje a RabbitMQ
+# Función para enviar mensaje a RabbitMQ con verificación de conexión
 def send_viewed_message(message_channel, video_path):
-    logging.info("Publishing message on 'viewed' queue.")
-    msg = {"videoPath": video_path}
-    json_msg = json.dumps(msg)
-    message_channel.basic_publish(exchange='', routing_key='viewed', body=json_msg)
-    logging.info(f"Message published: {json_msg}")
+    try:
+        if message_channel.is_open:
+            logging.info("Publishing message on 'viewed' queue.")
+            msg = {"videoPath": video_path}
+            json_msg = json.dumps(msg)
+            message_channel.basic_publish(exchange='', routing_key='viewed', body=json_msg)
+            logging.info(f"Message published: {json_msg}")
+        else:
+            logging.warning("RabbitMQ channel closed, attempting to reconnect...")
+            connection, message_channel = connect_to_rabbitmq()
+            send_viewed_message(message_channel, video_path)
+    except pika.exceptions.AMQPError as e:
+        logging.error(f"Failed to publish message: {e}")
+        connection, message_channel = connect_to_rabbitmq()
+        send_viewed_message(message_channel, video_path)
 
 
 
