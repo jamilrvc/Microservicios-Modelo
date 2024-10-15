@@ -50,8 +50,7 @@ def process_rabbitmq_messages():
         
         # Acknowledge que el mensaje fue manejado
         ch.basic_ack(delivery_tag=method.delivery_tag)
-    message_channel.basic_con
-    message_channel.basic_consume(queue='viewed', on_message_callback=callback)
+    message_channel.basic_consume(queue=queue_name, on_message_callback=callback)
     print("Waiting for messages. To exit press CTRL+C")
     message_channel.start_consuming()
 

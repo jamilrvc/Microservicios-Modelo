@@ -33,6 +33,7 @@ def connect_to_rabbitmq():
                 )
             )
             channel = connection.channel()
+            channel.exchange_declare(exchange='viewed', exchange_type='fanout')
             logging.info("Connected to RabbitMQ.")
             return connection, channel
         except pika.exceptions.AMQPConnectionError as e:
@@ -48,7 +49,7 @@ def send_viewed_message(message_channel, video_path):
             logging.info("Publishing message on 'viewed' queue.")
             msg = {"videoPath": video_path}
             json_msg = json.dumps(msg)
-            message_channel.basic_publish(exchange='', routing_key='viewed', body=json_msg)
+            message_channel.basic_publish(exchange='viewed', routing_key='viewed', body=json_msg)
             logging.info(f"Message published: {json_msg}")
         else:
             logging.warning("RabbitMQ channel closed, attempting to reconnect...")
